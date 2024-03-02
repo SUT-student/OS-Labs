@@ -7,7 +7,7 @@
 
 #include <unistd.h>
 
-typedef struct PNDOE pnode;
+typedef struct PNODE pnode;
 
 // 基础进程控制块（PCB）
 typedef struct PCB {
@@ -23,7 +23,7 @@ typedef struct PCB {
 } pcb;
 
 // 进程组织结构：进程在广义二叉树或者进程链表中的节点结构
-struct PNDOE {
+struct PNODE {
     // 当前节点对应的进程控制块
     pcb *pcb;
     // 进程树中，当前节点的左右子节点
