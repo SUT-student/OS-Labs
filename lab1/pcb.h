@@ -7,6 +7,14 @@
 
 #include <unistd.h>
 
+// 定义进程状态枚举类型
+typedef enum ProcessState {
+    READY,
+    RUNNING,
+    BLOCKED,
+    TERMINATED
+} p_state;
+
 typedef struct PNODE pnode;
 
 // 基础进程控制块（PCB）
@@ -15,11 +23,12 @@ typedef struct PCB {
     int ppid;// 父进程id
     int uid; // 用户id
     int pri; // 进程优先级
-    int state; // 进程状态
+    p_state state; // 进程状态
     // 上次运行时间
-    int lasttime;
+    int last_time;
     // 进程运行总时间
     int totaltime;
+    int life;    // 剩余生命周期
 } pcb;
 
 // 进程组织结构：进程在广义二叉树或者进程链表中的节点结构
