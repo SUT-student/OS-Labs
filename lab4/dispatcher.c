@@ -85,7 +85,8 @@ void create() {
     p->pri = rand() % MAX_PRIORITY;
     p->life = rand() % MAX_LIFE + 1;
 
-    p->last_time = 0;
+    // 新进程创建时间为sys_time
+    p->last_time = sys_time;
 
     // 增加总生命周期
     life += p->life;
@@ -278,10 +279,11 @@ void run() {
 
 // 更新所有进程动态优先级，如果等待大于2倍进程当前寿命，则提升一个优先级（寿命短的更容易被执行）
 void update_pri() {
-    priority_node *p_node = NULL, *prev_array_node = NULL, *prev_pnode = NULL, *pp_node = NULL;
+    priority_node *p_node = NULL, *prev_array_node = NULL, *prev_pnode = NULL, *next_pnode = NULL;
     for (int i = 1; i < MAX_PRIORITY; ++i) {
         p_node = priority_array[i];
         while (p_node != NULL) {
+            next_pnode = p_node->next;
 
             // 计算等待时间
             int wait_time = sys_time - p_node->pcb->last_time;
@@ -307,6 +309,7 @@ void update_pri() {
                     priority_array[i - 1] = p_node;
                     // priority_array[i - 1]->next = NULL;
                 }
+                // 作为新尾部next清空信息
                 p_node->next = NULL;
 
                 // 设置上次运行时间为当前系统时间，只升级一次
@@ -315,9 +318,12 @@ void update_pri() {
                 --p_node->pcb->pri;
 
                 printf("Process %d upgrade to queue %d from %d\n", p_node->pcb->pid, i - 1, i);
+            } else {
+                // 如果节点需要提高优先级，prev_node不变
+                prev_pnode = p_node;
             }
-            prev_pnode = p_node;
-            p_node = p_node->next;
+
+            p_node = next_pnode;
         }
     }
 }
