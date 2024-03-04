@@ -11,6 +11,10 @@ fpnode_t *fplist;
 // 使用分区链
 upnode_t *uplist;
 
+// 循环首次适应算法
+// 记录上次查找结束的位置
+fpnode_t *last_fp;
+
 /**
  * 系统初始化
  **/
@@ -27,6 +31,8 @@ void init() {
     fplist->next = fplist;
     // 初始化使用分区链
     uplist = NULL;
+    // 循环首次适应算法
+    last_fp = fplist;
 }
 
 /**
@@ -66,7 +72,7 @@ void allocate(int pid, int alloc_size) {
 
     fpnode_t *fp = fplist;
     // 首次适应算法
-    bool find = first_fit(fp, alloc_size);
+    bool find = next_fit(&fp, alloc_size);
     if (!find) {
         printf("ERROR: 内存空间不足，申请失败！\n");
         return;
@@ -89,6 +95,7 @@ void allocate(int pid, int alloc_size) {
         if (fp->next == fp) {
             printf("INFO: 已无空闲分区，将空闲链表置为NULL\n");
             fplist = NULL;
+            last_fp = NULL;
         } else {
             // fp是链表头
             if (fp == fplist) {
@@ -96,6 +103,8 @@ void allocate(int pid, int alloc_size) {
             }
             fp->prev->next = fp->next;
             fp->next->prev = fp->prev;
+            // 上次查找结果移动至下一个
+            last_fp = fp->next;
         }
         free(fp);
     }
@@ -150,6 +159,7 @@ void release(int start_addr) {
         fplist->table = table;
         fplist->next = fplist;
         fplist->prev = fplist;
+        last_fp = fplist;
         return;
     }
 
@@ -254,12 +264,12 @@ void release(int start_addr) {
 }
 
 // 首次适应算法
-bool first_fit(fpnode_t *fp, int alloc_size) {
+bool first_fit(fpnode_t **fp, int alloc_size) {
     // 循环指针
     fpnode_t *p = fplist;
     do {
         if (p->table->size >= ALLOC_MIN_SIZE + alloc_size) {
-            *fp = *p;
+            *fp = p;
             return true;
         }
         p = p->next;
@@ -268,8 +278,19 @@ bool first_fit(fpnode_t *fp, int alloc_size) {
 }
 
 // 循环首次适应算法
-void next_fit() {
-
+bool next_fit(fpnode_t **fp, int alloc_size) {
+    // 循环指针
+    fpnode_t *p = last_fp;
+    do {
+        if (p->table->size >= ALLOC_MIN_SIZE + alloc_size) {
+            *fp = p;
+            // 记录找到的位置
+            last_fp = p;
+            return true;
+        }
+        p = p->next;
+    } while (p != last_fp);
+    return false;
 }
 
 // 最佳适应算法

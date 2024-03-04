@@ -61,10 +61,10 @@ void allocate(int, int);
 void release(int);
 
 // 首次适应算法
-bool first_fit(fpnode_t *, int);
+bool first_fit(fpnode_t **, int);
 
 // 循环首次适应算法
-void next_fit();
+bool next_fit(fpnode_t **, int);
 
 // 最佳适应算法
 void best_fit();
