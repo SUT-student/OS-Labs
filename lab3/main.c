@@ -11,7 +11,7 @@
  **/
 void terminal() {
     char cmdstr[32];
-    int pid, alloc_size;
+    int pid, alloc_size, start_addr;
     while (1) {
         printf("cmd: ");
         scanf("%s", cmdstr);
@@ -39,16 +39,16 @@ void terminal() {
         if (strcmp(cmdstr, "allocate") == 0) {
             printf("要申请的进程号: ");
             scanf("%d", &pid);
-            printf("要申请的内存大小(kb): ");
+            printf("要申请的内存大小(MB): ");
             scanf("%d", &alloc_size);
             allocate(pid, alloc_size);
             continue;
         }
 
         if (strcmp(cmdstr, "release") == 0) {
-            printf("要释放内存的进程号: ");
-            scanf("%d", &pid);
-            release(pid);
+            printf("要释放内存起始地址: ");
+            scanf("%d", &start_addr);
+            release(start_addr);
             continue;
         }
 

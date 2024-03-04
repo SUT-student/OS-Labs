@@ -5,10 +5,10 @@
 #ifndef OS_LABS_MEMORY_H
 #define OS_LABS_MEMORY_H
 
-// 内存容量，单位为kb
 #include <stdbool.h>
 #include <stddef.h>
 
+// 内存容量，单位为MB
 #define RAM_SIZE 64
 // 不可再分割的内存大小
 #define ALLOC_MIN_SIZE 0
