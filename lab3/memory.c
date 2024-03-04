@@ -55,7 +55,7 @@ void ps() {
 }
 
 void allocate(int pid, int alloc_size) {
-    if (alloc_size < 0 || alloc_size > RAM_SIZE) {
+    if (alloc_size <= 0 || alloc_size > RAM_SIZE) {
         printf("ERROR: 参数错误！\n");
         return;
     }
@@ -64,16 +64,9 @@ void allocate(int pid, int alloc_size) {
         return;
     }
 
-    // 首次适应算法
-    bool find = false;
     fpnode_t *fp = fplist;
-    do {
-        if (fp->table->size >= ALLOC_MIN_SIZE + alloc_size) {
-            find = true;
-            break;
-        }
-        fp = fp->next;
-    } while (fp != fplist);
+    // 首次适应算法
+    bool find = first_fit(fp, alloc_size);
     if (!find) {
         printf("ERROR: 内存空间不足，申请失败！\n");
         return;
@@ -130,6 +123,7 @@ void release(int start_addr) {
         for (; up && up->table->start_addr != start_addr; prev_up = up, up = up->next);
         if (!up) {
             printf("ERROR: 参数错误！\n");
+            return;
         }
     } else {
         printf("ERROR: 当前系统未分配内存！\n");
@@ -143,7 +137,6 @@ void release(int start_addr) {
     table->status = false;
 
     // 清除使用分区表中该分区
-    // 头部则置使用分区为空
     if (up == uplist) {
         uplist = up->next;
     } else {
@@ -199,16 +192,19 @@ void release(int start_addr) {
     }
 
     // 至少存在两个不相邻的空闲分区，找到空闲分区链中第一个比分区表地址大于或等于的位置（地址升序）
+    bool find = false;
     do {
         if (fp->table->start_addr >= table->start_addr + table->size) {
+            find = true;
             break;
         }
         fp = fp->next;
     } while (fp != fplist);
 
     // 没有找到 所有的起始地址都比分区表起始地址小，直接插入最后，只需判断是否左相邻
-    if (fp == fplist) {
-        // printf("没有找到 所有的起始地址都比分区表起始地址小\n"); debug
+    if (!find) {
+        // debug
+        // printf("没有找到 所有的起始地址都比分区表起始地址小\n");
         fpnode_t *tail = fplist->prev;
         // 左相邻 加size 不插入
         if (tail->table->start_addr + tail->table->size == table->start_addr) {
@@ -224,7 +220,8 @@ void release(int start_addr) {
     }
 
     // 找到，则fp为右空闲分区，前一个为左空闲分区
-    // printf("找到，则fp为右空闲分区，前一个为左空闲分区"); debug
+    // debug
+    // printf("找到，则fp为右空闲分区，前一个为左空闲分区");
     fpnode_t *left_fp = fp->prev;
     bool left = left_fp->table->start_addr + left_fp->table->size == table->start_addr;
     bool right = table->start_addr + table->size == fp->table->start_addr;
@@ -243,4 +240,39 @@ void release(int start_addr) {
         fp->table->start_addr = table->start_addr;
         fp->table->size += table->size;
     }
+        // 都不相邻 直接插入
+    else {
+        self->prev = left_fp;
+        self->next = fp;
+        left_fp->next = self;
+        fp->prev = self;
+        // 如果插入位置为头部 成为新头部
+        if (fp == fplist) {
+            fplist = self;
+        }
+    }
+}
+
+// 首次适应算法
+bool first_fit(fpnode_t *fp, int alloc_size) {
+    // 循环指针
+    fpnode_t *p = fplist;
+    do {
+        if (p->table->size >= ALLOC_MIN_SIZE + alloc_size) {
+            *fp = *p;
+            return true;
+        }
+        p = p->next;
+    } while (p != fplist);
+    return false;
+}
+
+// 循环首次适应算法
+void next_fit() {
+
+}
+
+// 最佳适应算法
+void best_fit() {
+
 }
