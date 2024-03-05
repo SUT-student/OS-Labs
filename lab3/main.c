@@ -10,7 +10,7 @@
  * 控制台
  **/
 void terminal() {
-    char cmdstr[32];
+    char cmdstr[32], fit_algorithm[20];
     int pid, alloc_size, start_addr;
     while (1) {
         printf("cmd: ");
@@ -41,7 +41,17 @@ void terminal() {
             scanf("%d", &pid);
             printf("要申请的内存大小(MB): ");
             scanf("%d", &alloc_size);
-            allocate(pid, alloc_size);
+            printf("要使用的动态内存分配算法[first:首次适应算法; next:循环首次适应算法; best:最佳适应算法]: ");
+            scanf("%s", fit_algorithm);
+            if (strcmp(fit_algorithm, "first") == 0) {
+                allocate(pid, alloc_size, first_fit);
+            } else if (strcmp(fit_algorithm, "next") == 0) {
+                allocate(pid, alloc_size, next_fit);
+            } else if (strcmp(fit_algorithm, "best") == 0) {
+                allocate(pid, alloc_size, best_fit);
+            } else {
+                printf("ERROR: 参数错误!");
+            }
             continue;
         }
 

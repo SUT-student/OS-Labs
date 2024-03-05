@@ -60,7 +60,7 @@ void ps() {
     printf("=============================\n\n");
 }
 
-void allocate(int pid, int alloc_size) {
+void allocate(int pid, int alloc_size, bool (*fit_algorithm)(fpnode_t **, int)) {
     if (alloc_size <= 0 || alloc_size > RAM_SIZE) {
         printf("ERROR: 参数错误！\n");
         return;
@@ -71,8 +71,7 @@ void allocate(int pid, int alloc_size) {
     }
 
     fpnode_t *fp = fplist;
-    // 首次适应算法
-    bool find = best_fit(&fp, alloc_size);
+    bool find = fit_algorithm(&fp, alloc_size);
     if (!find) {
         printf("ERROR: 内存空间不足，申请失败！\n");
         return;

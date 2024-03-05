@@ -56,7 +56,7 @@ void init();
 
 void ps();
 
-void allocate(int, int);
+void allocate(int, int, bool(fpnode_t **, int));
 
 void release(int);
 
