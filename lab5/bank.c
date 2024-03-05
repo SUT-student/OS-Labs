@@ -9,7 +9,9 @@
 #include "bank.h"
 
 // 系统可用资源列表
-int Available[RESOURCES] = {3, 3, 2};
+int Available[RESOURCES] = {3,
+                            3,
+                            2};
 // 进程运行所需要的总资源
 int Max[PROCESS][RESOURCES] = {{7, 5, 3},
                                {3, 2, 2},
@@ -30,16 +32,29 @@ int Allocation[PROCESS][RESOURCES] = {{0, 1, 0},
                                       {0, 0, 2}};
 
 void init() {
-    // 随机产生资源和使用情况
-//    srand(10 * getpid());
-//    for (int i = 0; i < PROCESS; i++) {
-//        for (int j = 0; j < RESOURCES; j++) {
-//            Available[j] = rand() % 5 + 15;
-//            Max[i][j] = rand() % 7 + 1;
-//            Allocation[i][j] = rand() % 3 + 1;
-//            Need[i][j] = Max[i][j] - Allocation[i][j];
-//        }
-//    }
+    //随机产生资源和使用情况
+    bool flag = 0;
+    int j;
+    srand(10 * getpid());
+    for (int i = 0; i < PROCESS; i++) {
+        for (j = 0; j < RESOURCES; j++) {
+            Available[j] = rand() % 4 + 2;
+            Max[i][j] = rand() % 7 + 1;
+            Allocation[i][j] = rand() % 3 + 1;
+            Need[i][j] = Max[i][j] - Allocation[i][j];
+            if ((Need[i][j] < 0) || (Need[i][j] > 5))
+                --j;
+        }
+
+        for (int j = 0; j < RESOURCES; j++) {
+            if (Need[i][j] < Available[j])
+                break;
+            if (j == RESOURCES - 1) {
+                --j;
+                break;
+            }
+        }
+    }
 }
 
 // 查看当前账本
@@ -50,7 +65,7 @@ void ps() {
         printf("=");
     }
 
-    printf("\nAvailable:");
+    printf("\nAvailable:"); //可利用资源向量 每类资源的数目
     for (int i = 0; i < RESOURCES; i++) {
         printf("%3d ", Available[i]);
     }
@@ -58,7 +73,7 @@ void ps() {
     for (int i = 0; i < (int) ((3 * RESOURCES + 2) / 2.0 + 0.5) - 5; ++i) {
         printf(" ");
     }
-    printf("Allocation");
+    printf("Allocation");   //分配矩阵 每个进程已得到的每类资源的数目
     for (int i = 0; i < (int) ((3 * RESOURCES + 2) / 2.0 + 0.5) - 5; ++i) {
         printf(" ");
     }
@@ -67,7 +82,7 @@ void ps() {
     for (int i = 0; i < (int) ((3 * RESOURCES + 2) / 2.0 + 0.5) - 2; ++i) {
         printf(" ");
     }
-    printf("Need\n");
+    printf("Need\n"); //需求矩阵 每个进程还需要的每类资源的数目。
 
     // Process
     for (int i = 0; i < PROCESS; i++) {
@@ -95,7 +110,7 @@ void ps() {
 }
 
 /**
- * 银行家算法
+ * 安全检查算法
  * pid：当前要运行的进程
  * no：当前运行的进程顺序
  * work：当前系统可用资源
@@ -119,6 +134,7 @@ bool bank(int pid, int no, int work[], int finish[]) {
 
     // 释放资源
     for (int i = 0; i < RESOURCES; i++) {
+        printf("当前pid: %d, 可用的资源: %d, 需要的资源: %d。满足运行条件！\n", pid, work[i], Need[pid][i]);
         work[i] += Allocation[pid][i];
     }
 
@@ -203,6 +219,18 @@ void request(int pid, const int req_list[]) {
 
     // 如果系统安全，则本次分配完成
     if (safe) {
+        // 分配后检查是否有资源可释放
+        int i = 0;
+        for (; i < RESOURCES && Need[pid][i] == 0; i++);
+
+        // 释放资源
+        if (i == RESOURCES) {
+            for (i = 0; i < RESOURCES; i++) {
+                Available[i] += Allocation[pid][i];
+                Allocation[pid][i] = 0;
+            }
+        }
+
         printf("本次分配完成！\n");
         ps();
     } else {
