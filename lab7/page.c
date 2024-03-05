@@ -47,6 +47,12 @@ void init(int page_frames) {
 
     // 初始化忙页框队列头指针
     busy_pf_head = busy_pf_tail = NULL;
+
+    // 程序前8页调入内存
+    for (int i = 0; i < 8; ++i) {
+        pfc[i].page_no = i;
+        page[i].page_frame_no = i;
+    }
 }
 
 /* 先进先出置换算法
