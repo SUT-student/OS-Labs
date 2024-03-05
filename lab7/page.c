@@ -153,5 +153,60 @@ void LRU(int page_frames) {
  * page_frames: 内存页框数
  */
 void OPT(int page_frames) {
+    // 记录每个页面离起点的距离，置换距离最大的页面（最长时间内不会被访问）
+    int dist[total_pages], max_dist;
+    int max_dist_page_frame;
+    init(page_frames);
 
+    for (int i = 0; i < total_instructions; ++i) {
+        int page_id = op2page[i];
+        // 页面失效 不在内存中
+        if (page[page_id].page_frame_no == INVALID) {
+            ++invalid_pages; // 缺页加1
+
+            // 无空闲页框
+            if (free_pf_head == NULL) {
+                // 设置在内存中的页面的距离为最大值，如果某页面以后不会再被访问，则距离为最大被选中
+                for (int j = 0; j < total_pages; ++j) {
+                    if (page[j].page_frame_no != INVALID) {
+                        dist[j] = total_instructions;
+                    }
+                }
+
+                // 更新i+1后面的指令所属页面距当前的距离
+                for (int k = i + 1, d = 1; k < total_instructions; ++d, ++k) {
+                    // 仅判断在内存中的页面
+                    if (page[op2page[k]].page_frame_no != INVALID) {
+                        dist[op2page[k]] = d;
+                    }
+                }
+
+                // 找到距离最大的页面
+                max_dist = -1;
+                for (int j = 0; j < page_frames; ++j) {
+                    if (dist[pfc[j].page_no] > max_dist) {
+                        max_dist = dist[pfc[j].page_no];
+                        max_dist_page_frame = j;
+                    }
+                }
+
+                // 作为空闲页框队头
+                free_pf_head = &pfc[max_dist_page_frame];
+                // 取消进程页面与内存页框的关联
+                page[free_pf_head->page_no].page_frame_no = INVALID;
+                free_pf_head->page_no = INVALID;
+                free_pf_head->next = NULL;
+            }
+
+            // OPT 调入新页面到内存页框
+            pfc_t *busy_pf = free_pf_head;
+            // 空闲页框队列指向下一个
+            free_pf_head = free_pf_head->next;
+
+            // 空闲页框与进程页面号关联
+            busy_pf->page_no = page_id;
+            page[page_id].page_frame_no = busy_pf->page_frame_no;
+        }
+    }
+    printf("OPT:%6.4f ", invalid_pages / 320.0);
 }

@@ -57,6 +57,7 @@ int main() {
         printf("[%2d page frames] 缺页率: ", i);
         FIFO(i);
         LRU(i);
+        OPT(i);
         puts("");
     }
 }

@@ -43,7 +43,7 @@ extern int op2offset[total_instructions]; // 页内偏移量
 
 void init(int);
 
-void OPT();
+void OPT(int);
 
 void FIFO(int);
 
