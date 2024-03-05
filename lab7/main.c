@@ -53,7 +53,7 @@ int main() {
         op2offset[i] = op[i] % 10;
     }
 
-    for (int i = 4; i <= MAX_PAGE_FRAMES; ++i) {
+    for (int i = 8; i <= MAX_PAGE_FRAMES; ++i) {
         printf("[%2d page frames] 缺页率: ", i);
         FIFO(i);
         LRU(i);

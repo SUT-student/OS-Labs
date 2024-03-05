@@ -33,25 +33,28 @@ void init(int page_frames) {
 
     // 用户可用内存容量8K，进程页面1K，内存有8个页框
     // 初始化内存页框控制块
-    for (int i = 0; i < page_frames; ++i) {
+    for (int i = 0; i < page_frames - 1; ++i) {
         pfc[i].page_no = INVALID;
         pfc[i].page_frame_no = i;
         pfc[i].next = &pfc[i + 1];
     }
+    pfc[page_frames - 1].page_no = INVALID;
     pfc[page_frames - 1].page_frame_no = page_frames - 1;
     pfc[page_frames - 1].next = NULL;
-
-    // 初始化空页框队列头指针
-    free_pf_head = &pfc[0];
-
-    // 初始化忙页框队列头指针
-    busy_pf_head = busy_pf_tail = NULL;
 
     // 程序前8页调入内存
     for (int i = 0; i < 8; ++i) {
         pfc[i].page_no = i;
         page[i].page_frame_no = i;
     }
+
+    // 初始化空页框队列头指针
+    free_pf_head = &pfc[8];
+
+    // 初始化忙页框队列头指针
+    busy_pf_head = &pfc[0];
+    busy_pf_tail = &pfc[7];
+    busy_pf_tail->next = NULL;
 }
 
 /* 先进先出置换算法
