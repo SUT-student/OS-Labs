@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include "dispatcher.h"
 
 int life;    // 系统剩余总生命周期
@@ -11,6 +12,32 @@ int sys_time; // 系统过去的时间
 char command[9][10];    // 命令列表
 static int id_list[PROCESS_NUMBER];    // 进程ID列表，记录进程创建状态
 priority_node *priority_array[MAX_PRIORITY]; // 优先级队列数组
+
+void Log(const char *format, ...) {
+    // 打开文件流，以追加方式写入文件
+    FILE *fd = fopen("output.txt", "a");
+    if (fd == NULL) {
+        fprintf(stderr, "Error opening file.\n");
+        return;
+    }
+
+    // 声明变量存储参数列表
+    va_list args;
+    // 初始化args为参数列表的起始位置
+    va_start(args, format);
+
+    // 将格式化输出发送到标准输出
+    vprintf(format, args);
+
+    // 将格式化输出发送到文件流
+    vfprintf(fd, format, args);
+
+    // 结束参数列表的使用
+    va_end(args);
+
+    // 关闭文件流
+    fclose(fd);
+}
 
 /**
  * 系统初始化
@@ -31,6 +58,10 @@ void init() {
     strcpy(command[6], "sleep");
     strcpy(command[7], "awake");
     strcpy(command[8], "run");
+
+    // 打开文件以写入模式，如果文件存在则清除
+    FILE *fd = fopen("output.txt", "w+");
+    fclose(fd);
 }
 
 int allocate_pid() {
@@ -49,18 +80,18 @@ int allocate_pid() {
  **/
 void ps() {
     priority_node *p;
-    printf("\n=================================================\n");
-    printf("Total system life: %d\n", life);
+    Log("\n=================================================\n");
+    Log("Total system life: %d\n", life);
     for (int i = 0; i < MAX_PRIORITY; i++) {
-        printf("Priority level: %d\n", i);
+        Log("Priority level: %d\n", i);
         p = priority_array[i];
         while (p != NULL) {
-            printf("id: %d, status: %d, priority: %d, life: %d\n", p->pcb->pid, p->pcb->state, p->pcb->pri,
-                   p->pcb->life);
+            Log("id: %d, status: %d, priority: %d, life: %d\n", p->pcb->pid, p->pcb->state, p->pcb->pri,
+                p->pcb->life);
             p = p->next;
         }
     }
-    printf("=================================================\n\n");
+    Log("=================================================\n\n");
 }
 
 /**
@@ -78,12 +109,15 @@ void create() {
 
     // 检查是否到达进程数量上限，同时分配进程ID
     if (p->pid == -1) {
-        printf("System max process error!\n");
+        Log("System max process error!\n");
         return;
     }
 
     p->pri = rand() % MAX_PRIORITY;
     p->life = rand() % MAX_LIFE + 1;
+
+    // 假设进程创建完就已就绪
+    p->state = READY;
 
     // 新进程创建时间为sys_time
     p->last_time = sys_time;
@@ -108,8 +142,7 @@ void create() {
     }
 
     // 插入完成，输出当前进程状态
-    printf("Successfully create process(id: %d), current system status: \n", p->pid);
-    // ps();
+    Log("Successfully create process(id: %d)\n", p->pid);
 }
 
 /**
@@ -147,7 +180,7 @@ void kill(int pid) {
 
     // 未找到进程x，操作终止
     if (!find) {
-        printf("Kill: Invaild process number!\n");
+        Log("Kill: Invaild process number!\n");
         return;
     }
 
@@ -192,7 +225,7 @@ int runtime() {
     }
 
     if (i >= MAX_PRIORITY) {
-        printf("No process in the system, create a process and try again!\n");
+        Log("No process in the system, create a process and try again!\n");
         return -1;
     }
 
@@ -201,10 +234,10 @@ int runtime() {
     int old_quantum = quantum;
 
     // 运行一个时间片周期
-    printf("Process(id: %d) gain the CPU time and will execute %d quantum\n", r->pcb->pid, quantum);
+    Log("Process(id: %d) gain the CPU time and will execute %d quantum\n", r->pcb->pid, quantum);
     r->pcb->state = RUNNING;    // 将进程状态置为运行中
 
-    printf("Process %d is running...\n", r->pcb->pid);
+    Log("Process %d is running...\n", r->pcb->pid);
 
     // 计算实际执行时间片
     quantum = r->pcb->life < quantum ? r->pcb->life : quantum;
@@ -217,7 +250,7 @@ int runtime() {
 //    }
 
     if (r->pcb->life < old_quantum) {
-        printf("Past %d quantum before end of process %d life, exit early...\n", r->pcb->life, r->pcb->pid);
+        Log("Past %d quantum before end of process %d life, exit early...\n", r->pcb->life, r->pcb->pid);
     }
 
     // 更新系统时间
@@ -226,7 +259,7 @@ int runtime() {
     // 更新进程最后一次运行时间
     r->pcb->last_time = sys_time;
 
-    printf("Time out, change to ready status, reduce priority to %d\n", r->pcb->pri + 1);
+    Log("Time out, change to ready status, reduce priority to %d\n", r->pcb->pri + 1);
     // 切换状态为就绪态
     r->pcb->state = READY;
     // 进程每执行一次，优先级降低一级
@@ -243,7 +276,7 @@ int runtime() {
 
     // 检查进程生命周期是否结束
     if (r->pcb->life == 0) {
-        printf("Process %d completed, now release it!\n", r->pcb->pid);
+        Log("Process %d completed, now release it!\n", r->pcb->pid);
         kill(r->pcb->pid);
     } else {
         // 从当前优先级链表移除
@@ -289,8 +322,8 @@ void update_pri() {
             int wait_time = sys_time - p_node->pcb->last_time;
 
             if (wait_time >= 2 * p_node->pcb->life) {
-                printf("Process %d wait time is %d bigger than its double life %d, will be upgrade...\n",
-                       p_node->pcb->pid, wait_time, p_node->pcb->life);
+                Log("Process %d wait time is %d bigger than its double life %d, will be upgrade...\n",
+                    p_node->pcb->pid, wait_time, p_node->pcb->life);
 
                 // 从本队列中删除节点
                 if (p_node == priority_array[i]) {
@@ -317,7 +350,7 @@ void update_pri() {
                 // 优先级提高一级
                 --p_node->pcb->pri;
 
-                printf("Process %d upgrade to queue %d from %d\n", p_node->pcb->pid, i - 1, i);
+                Log("Process %d upgrade to queue %d from %d\n", p_node->pcb->pid, i - 1, i);
             } else {
                 // 如果节点需要提高优先级，prev_node不变
                 prev_pnode = p_node;
