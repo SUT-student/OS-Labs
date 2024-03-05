@@ -6,7 +6,7 @@
 #include <malloc.h>
 #include "memory.h"
 
-// 空闲分区链
+// 空闲分区链（默认按地址升序排序）
 fpnode_t *fplist;
 // 使用分区链
 upnode_t *uplist;
@@ -72,7 +72,7 @@ void allocate(int pid, int alloc_size) {
 
     fpnode_t *fp = fplist;
     // 首次适应算法
-    bool find = next_fit(&fp, alloc_size);
+    bool find = best_fit(&fp, alloc_size);
     if (!find) {
         printf("ERROR: 内存空间不足，申请失败！\n");
         return;
@@ -294,6 +294,18 @@ bool next_fit(fpnode_t **fp, int alloc_size) {
 }
 
 // 最佳适应算法
-void best_fit() {
-
+bool best_fit(fpnode_t **fp, int alloc_size) {
+    bool find = false;
+    // 循环指针
+    fpnode_t *p = fplist, *best_p = NULL;
+    // 查找满足alloc_size的最小空闲容量
+    do {
+        if ((best_p == NULL || best_p->table->size > p->table->size) && p->table->size >= ALLOC_MIN_SIZE + alloc_size) {
+            find = true;
+            best_p = p;
+        }
+        p = p->next;
+    } while (p != fplist);
+    *fp = best_p;
+    return find;
 }

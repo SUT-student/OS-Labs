@@ -67,6 +67,6 @@ bool first_fit(fpnode_t **, int);
 bool next_fit(fpnode_t **, int);
 
 // 最佳适应算法
-void best_fit();
+bool best_fit(fpnode_t **, int);
 
 #endif //OS_LABS_MEMORY_H
