@@ -28,7 +28,6 @@ void init(int page_frames) {
     for (int i = 0; i < total_pages; ++i) {
         page[i].page_no = i;
         page[i].page_frame_no = INVALID;
-        page[i].count = 0;
         page[i].time = 0;
     }
 

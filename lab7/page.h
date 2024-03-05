@@ -13,13 +13,12 @@
 
 // 页面类型（进程逻辑地址空间）
 typedef struct {
-    int page_no; // 页号 page_number
+    int page_no;       // 页号 page_number
     int page_frame_no; // 页框号 page_frame_number
-    int count; // 一个周期内访问该页面的次数
-    int time; // 上次被访问时间
+    int time;          // 上次被访问时间 LRU
 } page_t;
 
-extern page_t page[32];
+extern page_t page[total_pages];
 
 // 内存页框控制结构(page_frame_control)
 typedef struct pfc_struct pfc_t;
