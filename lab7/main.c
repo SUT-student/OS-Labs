@@ -56,6 +56,7 @@ int main() {
     for (int i = 4; i <= MAX_PAGE_FRAMES; ++i) {
         printf("[%2d page frames] 缺页率: ", i);
         FIFO(i);
-        // LRU(i);
+        LRU(i);
+        puts("");
     }
 }

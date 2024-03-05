@@ -5,7 +5,7 @@
 #ifndef OS_LABS_PAGE_H
 #define OS_LABS_PAGE_H
 
-#define INVALID -1
+#define INVALID (-1)
 #define total_instructions 320
 #define instructions_per_page 10
 #define total_pages (total_instructions / instructions_per_page) // virtual pages
@@ -16,7 +16,7 @@ typedef struct {
     int page_no; // 页号 page_number
     int page_frame_no; // 页框号 page_frame_number
     int count; // 一个周期内访问该页面的次数
-    int time; // 访问时间
+    int time; // 上次被访问时间
 } page_t;
 
 extern page_t page[32];
